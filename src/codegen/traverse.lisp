@@ -302,6 +302,17 @@ was found."
      (apply f node args))
    node))
 
+(defun keep-location (old new)
+  "`new`, carrying `old`'s location if it has none. Copies rather than
+mutates, since `new` may be shared."
+  (declare (type node old new)
+           (values node &optional))
+  (if (or (eq old new) (node-location new) (null (node-location old)))
+      new
+      (let ((copy (copy-node new)))
+        (setf (node-location copy) (node-location old))
+        copy)))
+
 (defun traverse (initial-node custom-actions &rest initial-args)
   "The intended use case of `traverse` is to recursively propagate an
 operation through the AST when only a few nodes need custom behavior,
@@ -335,13 +346,15 @@ other nodes, then it would be inappropriate to also define an action
              (declare (type node current-node)
                       (type list args)
                       (values node &optional))
-             (alexandria-2:line-up-last
+             (keep-location
               current-node
-              (fire-action ':before   'node                                actions args)
-              (fire-action ':before   (class-name (class-of current-node)) actions args)
-              (fire-action ':traverse (class-name (class-of current-node)) actions args)
-              (fire-action ':after    (class-name (class-of current-node)) actions args)
-              (fire-action ':after    'node                                actions args))))
+              (alexandria-2:line-up-last
+               current-node
+               (fire-action ':before   'node                                actions args)
+               (fire-action ':before   (class-name (class-of current-node)) actions args)
+               (fire-action ':traverse (class-name (class-of current-node)) actions args)
+               (fire-action ':after    (class-name (class-of current-node)) actions args)
+               (fire-action ':after    'node                                actions args)))))
       (let ((*traverse* #'current-traverse))
         (apply *traverse* initial-node initial-args)))))
 
