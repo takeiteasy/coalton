@@ -149,6 +149,8 @@ Example:
                        (tc:binding-value define))
 
         :do (setf (gethash name offsets) offset)
+        :do (unless (node-location compiled-node)
+              (setf (node-location compiled-node) (source:location define)))
         :collect (cons name compiled-node)))
 
 (defun instance-bindings (instances env offsets)
@@ -158,7 +160,9 @@ Example:
         :for instance-bindings := (translate-instance instance env)
 
         :do (dolist (binding instance-bindings)
-              (setf (gethash (car binding) offsets) offset))
+              (setf (gethash (car binding) offsets) offset)
+              (unless (node-location (cdr binding))
+                (setf (node-location (cdr binding)) (source:location instance))))
         :append instance-bindings))
 
 (defun clean-environment-for-redefinition (env definitions)

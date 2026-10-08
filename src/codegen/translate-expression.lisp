@@ -1538,6 +1538,14 @@ Returns a `node'.")
 
             :finally (return out-node)))))
 
+(defmethod translate-expression :around ((expr tc:node) ctx env)
+  (declare (ignore ctx env))
+  (let ((node (call-next-method)))
+    (unless (node-location node)
+      (setf (node-location node) (source:location expr)))
+    node))
+
+
 (defun translate-integer-pattern-test (pat ctx env)
   (let* ((type (tc:qualified-ty-type (tc:pattern-type pat)))
          (arg (gensym "PATTERN-VALUE"))

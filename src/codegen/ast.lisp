@@ -6,10 +6,12 @@
    (#:util #:coalton-impl/util)
    (#:algo #:coalton-impl/algorithm)
    (#:parser #:coalton-impl/parser)
+   (#:source #:coalton-impl/source)
    (#:tc #:coalton-impl/typechecker))
   (:export
    #:node                               ; STRUCT
    #:node-type                          ; READER
+   #:node-location                      ; ACCESSOR
    #:copy-node                          ; FUNCTION
    #:node-list                          ; TYPE
    #:binding-list                       ; TYPE
@@ -218,7 +220,9 @@
                  (:copier %copy-node))
   ;; The `type` slot can be accessed by the exported function
   ;; `node-type`.
-  (type (util:required 'type) :type tc:ty))
+  (type (util:required 'type) :type tc:ty)
+  ;; The source span the node was translated from, when known.
+  (location nil :type (or null source:location)))
 
 (defun copy-node (node &optional (new-type nil supplied-p))
   "Make a copy of `node`, optionally with a `new-type`."
@@ -235,6 +239,17 @@
   (declare (type node node)
            (values tc:ty &optional))
   (%node-type node))
+
+(defun node-location (node)
+  "Get the source location `node` was translated from, or NIL."
+  (declare (type node node)
+           (values (or null source:location) &optional))
+  (%node-location node))
+
+(defun (setf node-location) (location node)
+  (declare (type (or null source:location) location)
+           (type node node))
+  (setf (%node-location node) location))
 
 (defmethod make-load-form ((self node) &optional env)
   (make-load-form-saving-slots self :environment env))
