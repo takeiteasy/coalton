@@ -346,15 +346,18 @@ other nodes, then it would be inappropriate to also define an action
              (declare (type node current-node)
                       (type list args)
                       (values node &optional))
-             (keep-location
-              current-node
-              (alexandria-2:line-up-last
-               current-node
-               (fire-action ':before   'node                                actions args)
-               (fire-action ':before   (class-name (class-of current-node)) actions args)
-               (fire-action ':traverse (class-name (class-of current-node)) actions args)
-               (fire-action ':after    (class-name (class-of current-node)) actions args)
-               (fire-action ':after    'node                                actions args)))))
+             (let ((class (class-name (class-of current-node)))
+                   (node current-node))
+               ;; Each step keeps the location, so later actions see it.
+               (loop :for (when-key type-key) :in `((:before node)
+                                                    (:before ,class)
+                                                    (:traverse ,class)
+                                                    (:after ,class)
+                                                    (:after node))
+                     :do (setf node (keep-location
+                                     node
+                                     (fire-action when-key type-key actions args node))))
+               node)))
       (let ((*traverse* #'current-traverse))
         (apply *traverse* initial-node initial-args)))))
 
