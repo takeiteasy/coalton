@@ -46,7 +46,12 @@ A function bound here will be called with a keyword category, and one or more ad
 
   :AST name type value
 
-    Toplevel definitions, after type checking and before compilation.")
+    Toplevel definitions, after type checking and before compilation.
+
+  :CODEGEN-AST bindings env
+
+    The translation unit's definitions and instance methods as codegen AST
+    bindings, (name . node), before optimization.")
 
 (defun function-type-lambda-list (node env)
   (declare (type node-abstraction node)
@@ -184,6 +189,9 @@ Example:
             (definition-bindings (tc:translation-unit-definitions translation-unit) env offsets)
             (instance-bindings (tc:translation-unit-instances translation-unit) env offsets)))
          (env (clean-environment-for-redefinition env definitions)))
+
+    (when *codegen-hook*
+      (funcall *codegen-hook* ':CODEGEN-AST definitions env))
 
     (multiple-value-bind (definitions env)
         (optimize-bindings definitions monomorphize-table inline-p-table *package* env)
